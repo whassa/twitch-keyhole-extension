@@ -42,7 +42,7 @@ module.exports = (_env,argv)=> {
     }
   }
 
-  let entry = {}
+  let entry = { "babel": "@babel/polyfill"}
 
   // edit webpack plugins here!
   let plugins = [

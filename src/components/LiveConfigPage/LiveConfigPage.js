@@ -1,6 +1,8 @@
 import React from 'react'
+import Axios from 'axios'
 import Authentication from '../../util/Authentication/Authentication'
-
+import Switch from '@material-ui/core/Switch';
+import Button from '@material-ui/core/Button';
 import './LiveConfigPage.css'
 
 export default class LiveConfigPage extends React.Component{
@@ -10,10 +12,15 @@ export default class LiveConfigPage extends React.Component{
 
         //if the extension is running on twitch or dev rig, set the shorthand here. otherwise, set to null. 
         this.twitch = window.Twitch ? window.Twitch.ext : null
+        this.twitch.onError((error)=> {})
         this.state={
             finishedLoading:false,
-            theme:'light'
+            theme:'light',
+            decklistId: '',
+            publishDeckList: false,
+            error: false,
         }
+        this.saveState = this.saveState.bind(this);
     }
 
     contextUpdate(context, delta){
@@ -26,12 +33,34 @@ export default class LiveConfigPage extends React.Component{
 
     componentDidMount(){
         if(this.twitch){
+
+            this.twitch.configuration.onChanged( () => {
+                let decklist;
+                try {
+                    var obj = JSON.parse(this.twitch.configuration.broadcaster.content);
+                    let decklist = Number(obj.decklistId);
+                    let publishDeckList =  (obj.publishDeckList);
+                    if (Number.isFinite(decklist)){
+                        this.setState(()=> {
+                            return {
+                                decklistId: decklist,
+                                publishDeckList: publishDeckList,
+                            }
+                        })
+                    }
+                } catch(error){
+                    this.setState(()=>{
+                        return {finishedLoading:true}
+                    })
+
+                }
+                // if the component hasn't finished loading (as in we've not set up after getting a token), let's set it up now.
+                // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
+            });
+
             this.twitch.onAuthorized((auth)=>{
                 this.Authentication.setToken(auth.token, auth.userId)
                 if(!this.state.finishedLoading){
-                    // if the component hasn't finished loading (as in we've not set up after getting a token), let's set it up now.
-
-                    // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
                     this.setState(()=>{
                         return {finishedLoading:true}
                     })
@@ -57,20 +86,80 @@ export default class LiveConfigPage extends React.Component{
             this.twitch.unlisten('broadcast', ()=>console.log('successfully unlistened'))
         }
     }
+
+    changeDeckList(e) {
+        var value = e.target.value
+        this.setState({ decklistId: value});
+
+        let req = ( this.state.publishDeckList 
+            ? 'https://netrunnerdb.com/api/2.0/public/decklist/'
+            : 'https://netrunnerdb.com/api/2.0/public/deck/'
+        );
+        let the = this;
+        Axios.get(req+value)
+            .then(() => {
+                the.setState({ error: false });
+            }).catch( (error) => {
+                the.setState({ error: true })
+            })
+    }
+
+    saveState() {
+        this.twitch.configuration.set('broadcaster', '1', 
+            JSON.stringify({ 
+                decklistId: this.state.decklistId,
+                publishDeckList: this.state.publishDeckList
+            })
+        );
+        this.twitch.send("broadcast", "application/json", { 
+            decklistId: this.state.decklistId,
+            publishDeckList: this.state.publishDeckList
+        })
+    }
     
     render(){
         if(this.state.finishedLoading){
             return (
                 <div className="LiveConfigPage">
                     <div className={this.state.theme === 'light' ? 'LiveConfigPage-light' : 'LiveConfigPage-dark'} >
-                        <p>Hello world!</p>
-                        <p>This is the live config page! </p>
+                        <label> Please enter a deck list code :</label>
+                            <input 
+                                type="text"
+                                placeholder="Enter decklist id" 
+                                value={this.state.decklistId}
+                                onChange={(e) => {this.changeDeckList(e)}}
+                            />
+                            {this.state.error && (<div>
+                                    Are you sure the deck is public or it's the correct id?
+                                </div>
+                            )}
+                            <div>
+                                <Switch
+                                    checked={this.state.publishDeckList}
+                                    onChange={() => {
+                                        this.setState({publishDeckList: !this.state.publishDeckList
+                                    })}}
+                                    color="primary"
+                                    name="checkedB"
+                                />
+                                Check to use published decklist id from netrunnerdb instead of view.
+                            </div>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={this.saveState}
+                            >
+                                Save Changes
+                            </Button> 
                     </div>
                 </div>
             )
         }else{
             return (
                 <div className="LiveConfigPage">
+                    <div className={this.state.theme==='light' ? 'Config-light' : 'Config-dark'}>
+                        Loading...
+                    </div>
                 </div>
             )
         }

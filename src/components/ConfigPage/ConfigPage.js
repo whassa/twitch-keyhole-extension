@@ -1,5 +1,8 @@
 import React from 'react'
 import Authentication from '../../util/Authentication/Authentication'
+import Axios from 'axios'
+import Switch from '@material-ui/core/Switch';
+import Button from '@material-ui/core/Button';
 import './Config.css'
 
 export default class ConfigPage extends React.Component{
@@ -9,12 +12,15 @@ export default class ConfigPage extends React.Component{
 
         //if the extension is running on twitch or dev rig, set the shorthand here. otherwise, set to null. 
         this.twitch = window.Twitch ? window.Twitch.ext : null
-        this.twitch.onError((error)=> {console.log('aloa')})
+        this.twitch.onError((error)=> {})
         this.state={
             finishedLoading:false,
             theme:'light',
-            anrDeckId: 1,
+            decklistId: 1,
+            publishDeckList: false,
+            error: false,
         }
+        this.saveState = this.saveState.bind(this);
     }
 
     contextUpdate(context, delta){
@@ -25,17 +31,45 @@ export default class ConfigPage extends React.Component{
         }
     }
 
+
+
     componentDidMount(){
         // do config page setup as needed here
         if(this.twitch){
+
+            this.twitch.configuration.onChanged( () => {
+                let decklist;
+                try {
+                    var obj = JSON.parse(this.twitch.configuration.broadcaster.content);
+                    let decklist = Number(obj.decklistId);
+                    let publishDeckList =  (obj.publishDeckList);
+                    if (Number.isFinite(decklist)){
+                        this.setState(()=> {
+                            return {
+                                decklistId: decklist,
+                                publishDeckList: publishDeckList,
+                            }
+                        })
+                    }
+                } catch(error){
+                    this.setState(()=>{
+                        return {finishedLoading:true}
+                    })
+
+                }
+                // if the component hasn't finished loading (as in we've not set up after getting a token), let's set it up now.
+                // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
+            });
+
+
             this.twitch.onAuthorized((auth)=>{
                 this.Authentication.setToken(auth.token, auth.userId)
                 if(!this.state.finishedLoading){
-                    // if the component hasn't finished loading (as in we've not set up after getting a token), let's set it up now.
-                    // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
                     this.setState(()=>{
                         return {finishedLoading:true}
-                    },  () => {} )
+                    })
+                    // if the component hasn't finished loading (as in we've not set up after getting a token), let's set it up now.
+                    // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
                 }
             })
             
@@ -44,11 +78,36 @@ export default class ConfigPage extends React.Component{
             })
         }
     }
-    changeState(e) {
+
+    changeDeckList(e) {
         var value = e.target.value
-        this.setState({ anrDeckId: value },
-            this.twitch.configuration.set('broadcaster', '1', value)
+        this.setState({ decklistId: value});
+
+        let req = ( this.state.publishDeckList 
+            ? 'https://netrunnerdb.com/api/2.0/public/decklist/'
+            : 'https://netrunnerdb.com/api/2.0/public/deck/'
         );
+        let the = this;
+        Axios.get(req+value)
+            .then(() => {
+                the.setState({ error: false });
+            }).catch( (error) => {
+                console.log('aloa');
+                the.setState({ error: true })
+            })
+    }
+
+    saveState() {
+        this.twitch.configuration.set('broadcaster', '1', 
+            JSON.stringify({ 
+                decklistId: this.state.decklistId,
+                publishDeckList: this.state.publishDeckList
+            })
+        );
+        this.twitch.send("broadcast", "application/json", { 
+            decklistId: this.state.decklistId,
+            publishDeckList: this.state.publishDeckList
+        })
     }
 
     render(){
@@ -62,11 +121,29 @@ export default class ConfigPage extends React.Component{
                             <input 
                                 type="text"
                                 placeholder="Enter decklist id" 
-                                value={this.state.anrDeckId}
-                                onChange={(e) => {this.changeState(e)}}
+                                value={this.state.decklistId}
+                                onChange={(e) => {this.changeDeckList(e)}}
+                            />
+                            {this.state.error && (<div>
+                                    Are you sure the deck is public or it's the correct id?
+                                </div>
+                            )}
+                            <div>
+                                <Switch
+                                    checked={this.state.publishDeckList}
+                                    onChange={() => {this.setState({publishDeckList: !this.state.publishDeckList})}}
+                                    color="primary"
+                                    name="checkedB"
+                                />
+                                Check to use published decklist id from netrunnerdb instead of view.
+                            </div>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={this.saveState}
                             >
-                            </input>
-
+                                Save Changes
+                            </Button>  
                         </div>
                     </div>
                 </>
