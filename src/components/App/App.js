@@ -26,7 +26,7 @@ export default class App extends React.Component{
             id: undefined,
             imgSrc: '',
             factions: {},
-            decklistRequest: '',
+            decklistNormalRequest: '',
         }
         this.handleClick = this.handleClick.bind(this);
         this.handleClose = this.handleClose.bind(this);
@@ -56,6 +56,11 @@ export default class App extends React.Component{
         var decklistRequest = (publishDeckList 
             ? 'https://netrunnerdb.com/api/2.0/public/decklist/' 
             : 'https://netrunnerdb.com/api/2.0/public/deck/'
+        );
+
+        var decklistNormalRequest = (publishDeckList
+            ? 'https://netrunnerdb.com/en/decklist/' 
+            : 'https://netrunnerdb.com/en/deck/view/'
         );
 
         const req1 = Axios.get(decklistRequest+decklist)
@@ -94,9 +99,8 @@ export default class App extends React.Component{
             }
         );
         Promise.all([req1, req2]).then(function(values) {
-            console.log(decklistRequest);
             the.setState(()=>{
-                return {finishedLoading:true, decklistRequest}
+                return {finishedLoading:true, decklistNormalRequest}
             })
         });
     }
@@ -107,8 +111,7 @@ export default class App extends React.Component{
                     message = JSON.parse(message);
                     let id = Number(message.decklistId);
                     let publishDeckList =  (message.publishDeckList);
-                    if (Number.isFinite(id) && Number(id) !== this.state.deckInfo.id) {
-
+                    if (Number.isFinite(id)) {
                         this.setState(()=>{
                             return {finishedLoading:false}
                         })
@@ -308,8 +311,7 @@ export default class App extends React.Component{
 
         if(this.state.finishedLoading){
             if (this.state.cards.length > 0) {
-                let deckList =  this.state.decklistRequest+this.state.deckInfo.id;
-                console.log(deckList);
+                let deckList =  this.state.decklistNormalRequest+this.state.deckInfo.id;
                 let src = `https://netrunnerdb.com/card_image/large/${this.state.identity.code}.jpg`;
                 let imgLink = `https://netrunnerdb.com/en/card/${this.state.identity.code}`;
                 return (
