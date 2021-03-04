@@ -296,7 +296,7 @@ export default class App extends React.Component{
 
     renderDeckList(){
         return (
-            <div className="decklist">
+            <div className="deck-list">
                 {this.cardsInfo(this.state.filteredCard.agenda, 'Agenda')}
                 {this.cardsInfo(this.state.filteredCard.asset, 'Asset')}
                 {this.cardsInfo(this.state.filteredCard.operation, 'Operation')}
