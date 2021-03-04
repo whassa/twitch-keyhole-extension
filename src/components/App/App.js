@@ -20,6 +20,7 @@ export default class App extends React.Component{
             unAvailable: false,
             identity: [],
             cards: [],
+            filteredCard: {},
             deckInfo: {},
             anchorEl: null,
             open: false,
@@ -31,6 +32,7 @@ export default class App extends React.Component{
         this.handleClick = this.handleClick.bind(this);
         this.handleClose = this.handleClose.bind(this);
         this.fetchData = this.fetchData.bind(this);
+        
     }
 
     contextUpdate(context, delta){
@@ -47,6 +49,64 @@ export default class App extends React.Component{
                 isVisible
             }
         })
+    }
+
+    filterCards(cardsInfo) {
+        let filteredCard = {};
+        filteredCard.agenda = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'agenda'
+        })
+        filteredCard.asset = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'asset'
+        })
+        filteredCard.operation = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'operation'
+        })
+        filteredCard.upgrade = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'upgrade'
+        })
+
+        filteredCard.barrier = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'ice' 
+                && (_.includes(obj.keywords, 'Barrier'))
+        })
+        filteredCard.codeGate = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'ice' 
+                && (_.includes(obj.keywords, 'Code Gate'))
+        })
+        filteredCard.sentry = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'ice' 
+                && (_.includes(obj.keywords, 'Sentry'))
+        })
+        filteredCard.otherIce = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'ice' 
+                && !(
+                    _.includes(obj.keywords, 'Barrier') 
+                    || _.includes(obj.keywords, 'Code Gate')
+                    || _.includes(obj.keywords, 'Sentry')
+                )
+        })
+        filteredCard.ice = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'ice'
+        })
+        filteredCard.event = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'event'
+        })
+        filteredCard.hardware = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'hardware'
+        })
+        filteredCard.resource = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'resource'
+        })
+        filteredCard.program = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'program'  
+                && !(_.includes(obj.keywords, 'Icebreaker') || _.includes(obj.keywords, 'icebreaker'))
+        })
+        filteredCard.icebreaker = _.filter(cardsInfo, (obj) => {
+            return obj.type_code === 'program' 
+                && (_.includes(obj.keywords, 'Icebreaker'))
+        })
+        return filteredCard;
     }
 
     fetchData(decklist, publishDeckList){
@@ -81,7 +141,9 @@ export default class App extends React.Component{
                 })
                 let identity = cardsInfo[index];
                 await cardsInfo.splice(index, 1);
-                the.setState({ deckInfo: data, identity, cards: cardsInfo})
+                let filteredCard = await the.filterCards(cardsInfo);
+
+                the.setState({ deckInfo: data, identity, cards: cardsInfo, filteredCard})
                 return response;
             })
             .catch( (error) => {
@@ -214,70 +276,40 @@ export default class App extends React.Component{
         
     }
 
-
     cardsInfo(array, name) {
-        return(
-            <div>
-                { array.length > 0 &&
-                    (
-                        <>
-                            <h3 className="cardType">{name}</h3>
-                            <ul className="cardList">
-                                {array.map( 
-                                    (obj) => 
-                                        this.cardsItem(obj)
-                                    )
-                                }
-                            </ul>
-                        </>
-                    )
-                }
-            </div>
-        );
+        if (array.length > 0) {
+            return(
+                <div>
+                    <h3 className="card-type">{name}</h3>
+                    <ul className="card-list">
+                        {array.map( 
+                            (obj) => 
+                                this.cardsItem(obj)
+                            )
+                        }
+                    </ul>
+                </div>
+            );
+        }
+        return null;
     }
 
     renderDeckList(){
-        const agendaCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'agenda'
-        })
-        const assetCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'asset'
-        })
-        const operationCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'operation'
-        })
-        const upgradeCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'upgrade'
-        })
-        const iceCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'ice'
-        })
-
-        const eventCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'event'
-        })
-        const hardwareCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'hardware'
-        })
-        const resourceCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'resource'
-        })
-        const programCards = _.filter(this.state.cards, (obj) => {
-            return obj.type_code === 'program'
-        })
-
         return (
             <div className="decklist">
-                {this.cardsInfo(agendaCards, 'Agenda')}
-                {this.cardsInfo(assetCards, 'Asset')}
-                {this.cardsInfo(operationCards, 'Operation')}
-                {this.cardsInfo(upgradeCards, 'Upgrade')}
-                {this.cardsInfo(iceCards, 'Ice')}
-
-                {this.cardsInfo(eventCards, 'Event')}
-                {this.cardsInfo(hardwareCards, 'Hardware')}
-                {this.cardsInfo(resourceCards, 'Resource')}
-                {this.cardsInfo(programCards, 'Program')}
+                {this.cardsInfo(this.state.filteredCard.agenda, 'Agenda')}
+                {this.cardsInfo(this.state.filteredCard.asset, 'Asset')}
+                {this.cardsInfo(this.state.filteredCard.operation, 'Operation')}
+                {this.cardsInfo(this.state.filteredCard.upgrade, 'Upgrade')}
+                {this.cardsInfo(this.state.filteredCard.barrier, 'Barrier')}
+                {this.cardsInfo(this.state.filteredCard.codeGate, 'Code Gate')}
+                {this.cardsInfo(this.state.filteredCard.sentry, 'Sentry')}
+                {this.cardsInfo(this.state.filteredCard.otherIce, 'Other Ice')}
+                {this.cardsInfo(this.state.filteredCard.event, 'Event')}
+                {this.cardsInfo(this.state.filteredCard.hardware, 'Hardware')}
+                {this.cardsInfo(this.state.filteredCard.resource, 'Resource')}
+                {this.cardsInfo(this.state.filteredCard.icebreaker, 'Icebreaker')}
+                {this.cardsInfo(this.state.filteredCard.program, 'Program')}
                 <Popover
                     className="popover"
                      anchorOrigin={{
@@ -292,7 +324,7 @@ export default class App extends React.Component{
                     open={this.state.open}
                     onClose={this.handleClose}
                 >
-                  <img src={this.state.imgSrc} />
+                  <img src={this.state.imgSrc} width="200" heigth="275" />
                 </Popover>
             </div>
         )
@@ -317,16 +349,27 @@ export default class App extends React.Component{
                 return (
                     <div className="App">
                         <div className={'App-dark'} >
-                            <h1> 
+                            <h1 
+                                className="deck-title"
+                            > 
                                 <a className="card-link" href={deckList} target="_blank" rel="noopener noreferrer">
                                     {this.state.deckInfo.name}
                                 </a>
                             </h1>
                             <h2
+                                className="deck-identity"
                                 onMouseEnter={(e) => { this.handleClick(e, src ) }}
                                 onMouseLeave={this.handleClose}
                             > 
-                                <a className="card-link" href={imgLink} target="_blank" rel="noopener noreferrer">
+                                <a 
+                                    className="card-link"
+                                    href={imgLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                        color: `#${this.state.factions[this.state.identity.faction_code].color}`,
+                                    }}
+                                >
                                     {this.state.identity.title} 
                                 </a>
                             </h2>

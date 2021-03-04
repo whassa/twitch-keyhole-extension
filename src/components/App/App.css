@@ -13,27 +13,37 @@
     color:#e5e3e8;
 }
 
+.card {
+  margin: 0;
+}
+
 .card-item{
 	cursor: pointer;
 }
 
-.cardList{
+.card-list{
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
 }
 
-.decklist{
-	column-count: 2;
-}
-
-.card {
-	margin: 0;
-}
-
 .card-link {
 	color:#e5e3e8;
 	text-decoration: none;
+  font-size: 14px;
+}
+.card-type {
+  font-size: 14px;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.deck-title {
+  margin-top: 0px;
+  font-size: 18px;
+}
+
+.deck-identity {
+  font-size: 16px;
 }
 
 .popover {
