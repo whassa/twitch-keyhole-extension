@@ -3,6 +3,8 @@ import Authentication from '../../util/Authentication/Authentication'
 import Axios from 'axios'
 import Switch from '@material-ui/core/Switch';
 import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
+import HelpIcon from '@material-ui/icons/Help';
 import './Config.css'
 
 export default class ConfigPage extends React.Component{
@@ -135,7 +137,14 @@ export default class ConfigPage extends React.Component{
                                     color="primary"
                                     name="checkedB"
                                 />
-                                Check to use published decklist id from netrunnerdb instead of view.
+                                <span>
+                                    Check to use a published decklist ID from netrunnerdb.
+                                    Leave unchecked to use a private decklist ID instead   <Tooltip 
+                                        title="Published decklists have a 5 digit ID number, while private decklists are 6 digits"
+                                    >
+                                        <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
+                                    </Tooltip>
+                                </span>
                             </div>
                             <Button
                                 variant="contained"
