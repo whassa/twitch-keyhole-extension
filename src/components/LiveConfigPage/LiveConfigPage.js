@@ -147,7 +147,7 @@ export default class LiveConfigPage extends React.Component{
                                 <span>
                                     Check to use a published decklist ID from netrunnerdb.
                                     Leave unchecked to use a private decklist ID instead   <Tooltip 
-                                        title="Published decklists have a 5 digit ID number, while private decklists are 6 digits"
+                                        title="Published decklists have a 5 digit ID number, while private decklists are 7 digits"
                                     >
                                         <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
                                     </Tooltip>
