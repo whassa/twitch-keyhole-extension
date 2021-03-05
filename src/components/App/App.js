@@ -314,7 +314,7 @@ export default class App extends React.Component{
                     className="popover"
                      anchorOrigin={{
                         vertical: 'center',
-                        horizontal: 'right',
+                        horizontal: 'left',
                     }}
                     transformOrigin={{
                         vertical: 'center',
