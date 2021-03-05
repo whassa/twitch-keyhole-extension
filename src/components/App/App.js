@@ -324,7 +324,7 @@ export default class App extends React.Component{
                     open={this.state.open}
                     onClose={this.handleClose}
                 >
-                  <img src={this.state.imgSrc} width="200" heigth="275" />
+                  <img src={this.state.imgSrc} width="250" />
                 </Popover>
             </div>
         )
