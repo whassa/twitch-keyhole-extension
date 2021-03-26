@@ -113,7 +113,7 @@ export default class ConfigPage extends React.Component{
     }
 
     render(){
-        if(this.state.finishedLoading && this.Authentication.isModerator()){
+        if(this.state.finishedLoading){
             return(
                 <>
                     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
