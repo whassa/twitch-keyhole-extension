@@ -1,10 +1,13 @@
 import React from 'react'
 import Axios from 'axios'
+import _ from 'lodash'
 import Authentication from '../../util/Authentication/Authentication'
 import Switch from '@material-ui/core/Switch';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import './LiveConfigPage.css'
 
 export default class LiveConfigPage extends React.Component{
@@ -16,13 +19,16 @@ export default class LiveConfigPage extends React.Component{
         this.twitch = window.Twitch ? window.Twitch.ext : null
         this.twitch.onError((error)=> {})
         this.state={
+            applicationUse: 'jinteki',
             finishedLoading:false,
             theme:'light',
+            apiKey: '',
             decklistId: '',
             publishDeckList: false,
             error: false,
         }
-        this.saveState = this.saveState.bind(this);
+        this.saveNetrunnerDBState = this.saveNetrunnerDBState.bind(this);
+        this.saveJintekiState = this.saveJintekiState.bind(this);
     }
 
     contextUpdate(context, delta){
@@ -35,22 +41,39 @@ export default class LiveConfigPage extends React.Component{
 
     componentDidMount(){
         if(this.twitch){
-
             this.twitch.configuration.onChanged( () => {
                 let decklist;
                 try {
                     var obj = JSON.parse(this.twitch.configuration.broadcaster.content);
-                    let decklist = Number(obj.decklistId);
-                    let publishDeckList =  (obj.publishDeckList);
-                    if (Number.isFinite(decklist)){
-                        this.setState(()=> {
-                            return {
-                                decklistId: decklist,
-                                publishDeckList: publishDeckList,
-                            }
-                        })
+                    
+                    if (obj.apiKey) {
+                        let apiKey = obj.apiKey;
+                        if ( _.isString(apiKey)){
+                            this.setState(()=> {
+                                return {
+                                    apiKey,
+                                }
+                            })
+                        }
                     }
+
+                    if (obj.decklistId){
+                        let decklistId = Number(obj.decklistId);
+                        let publishDeckList =  (obj.publishDeckList);
+                        if (Number.isFinite(decklistId)){
+                            this.setState(()=> {
+                                return {
+                                    applicationUse: 'netrunnerdb',
+                                    decklistId,
+                                    publishDeckList,
+                                }
+                            })
+                        }
+                    }
+                   
+                    
                 } catch(error){
+                    console.log(error);
                     this.setState(()=>{
                         return {finishedLoading:true}
                     })
@@ -69,14 +92,6 @@ export default class LiveConfigPage extends React.Component{
                 }
             })
 
-            this.twitch.listen('broadcast',(target,contentType,body)=>{
-                this.twitch.rig.log(`New PubSub message!\n${target}\n${contentType}\n${body}`)
-                // now that you've got a listener, do something with the result... 
-
-                // do something...
-
-            })
-
             this.twitch.onContext((context,delta)=>{
                 this.contextUpdate(context,delta)
             })
@@ -84,9 +99,6 @@ export default class LiveConfigPage extends React.Component{
     }
 
     componentWillUnmount(){
-        if(this.twitch){
-            this.twitch.unlisten('broadcast', ()=>console.log('successfully unlistened'))
-        }
     }
 
     changeDeckList(e) {
@@ -106,7 +118,12 @@ export default class LiveConfigPage extends React.Component{
             })
     }
 
-    saveState() {
+    changeApiKey(e) {
+        var value = e.target.value
+        this.setState({ apiKey: value});
+    }
+
+    saveNetrunnerDBState() {
         this.twitch.configuration.set('broadcaster', '1', 
             JSON.stringify({ 
                 decklistId: this.state.decklistId,
@@ -118,48 +135,116 @@ export default class LiveConfigPage extends React.Component{
             publishDeckList: this.state.publishDeckList
         })
     }
+
+
+    saveJintekiState() {
+        console.log('saved correctly')
+        this.twitch.configuration.set('broadcaster', '1', 
+            JSON.stringify({ 
+                apiKey: this.state.apiKey,
+            })
+        );
+        this.twitch.send("broadcast", "application/json", { 
+            apiKey: this.state.apiKey,
+        })
+    }
+
+    renderJintekiOption() {
+        return(
+            <div>
+                <label>
+                    Please enter  your jinteki api key  
+                        <Tooltip 
+                            title="You can generate one in jinteki.net in your account setting in the section API Keys"
+                        >
+                            <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
+                        </Tooltip>
+                </label>
+                <input 
+                    type="text"
+                    placeholder="Enter the api key" 
+                    value={this.state.apiKey}
+                    onChange={(e) => {this.changeApiKey(e)}}
+                />
+    
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={this.saveJintekiState}
+                >
+                    Save Changes
+                </Button> 
+            </div>
+        );
+    }
+
+    renderNetrunnerDBOption() {
+        return(
+            <div>
+                <label> Please enter a deck list code :</label>
+                <input 
+                    type="text"
+                    placeholder="Enter decklist id" 
+                    value={this.state.decklistId}
+                    onChange={(e) => {this.changeDeckList(e)}}
+                />
+                {this.state.error && (<div>
+                        Are you sure the deck is public or it's the correct id?
+                    </div>
+                )}
+                <div>
+                    <Switch
+                        checked={this.state.publishDeckList}
+                        onChange={() => {
+                            this.setState({publishDeckList: !this.state.publishDeckList
+                        })}}
+                        color="primary"
+                        name="checkedB"
+                    />
+                    <span>
+                        Check to use a published decklist ID from netrunnerdb.
+                        Leave unchecked to use a private decklist ID instead   <Tooltip 
+                            title="Published decklists have a 5 digit ID number, while private decklists are 7 digits"
+                        >
+                            <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
+                        </Tooltip>
+                    </span>
+                </div>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={this.saveNetrunnerDBState}
+                >
+                    Save Changes
+                </Button> 
+            </div>
+        );
+    }
     
     render(){
+
+        const handleChange = (event) => {
+            setAge(event.target.value);
+        };
+
         if(this.state.finishedLoading){
             return (
                 <div className="LiveConfigPage">
                     <div className={this.state.theme === 'light' ? 'LiveConfigPage-light' : 'LiveConfigPage-dark'} >
-                        <label> Please enter a deck list code :</label>
-                            <input 
-                                type="text"
-                                placeholder="Enter decklist id" 
-                                value={this.state.decklistId}
-                                onChange={(e) => {this.changeDeckList(e)}}
-                            />
-                            {this.state.error && (<div>
-                                    Are you sure the deck is public or it's the correct id?
-                                </div>
-                            )}
-                            <div>
-                                <Switch
-                                    checked={this.state.publishDeckList}
-                                    onChange={() => {
-                                        this.setState({publishDeckList: !this.state.publishDeckList
-                                    })}}
-                                    color="primary"
-                                    name="checkedB"
-                                />
-                                <span>
-                                    Check to use a published decklist ID from netrunnerdb.
-                                    Leave unchecked to use a private decklist ID instead   <Tooltip 
-                                        title="Published decklists have a 5 digit ID number, while private decklists are 7 digits"
-                                    >
-                                        <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
-                                    </Tooltip>
-                                </span>
-                            </div>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={this.saveState}
-                            >
-                                Save Changes
-                            </Button> 
+                        <Select
+                          value={this.state.applicationUse}
+                          onChange={(event) => {this.setState({applicationUse: event.target.value})}}
+                        >
+                          <MenuItem value={'jinteki'}>Jinteki</MenuItem>
+                          <MenuItem value={'netrunnerdb'}>Netrunnerdb</MenuItem>
+                        </Select>
+                        <Tooltip 
+                            title="The change might not working during the stream"
+                        >
+                            <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
+                        </Tooltip>
+                        {this.state.applicationUse === 'jinteki' && this.renderJintekiOption()}
+                        {this.state.applicationUse === 'netrunnerdb' && this.renderNetrunnerDBOption()}
                     </div>
                 </div>
             )
