@@ -3,6 +3,7 @@ import "@babel/polyfill";
 import _ from 'lodash'
 import './App.css';
 import NetrunnerDb from './NetrunnerDb';
+import Jinteki from './Jinteki';
 
 export default class App extends React.Component{
     constructor(props){
@@ -52,7 +53,6 @@ export default class App extends React.Component{
                     }
 
                 } catch (error) {
-                    console.log(error)
                     this.setState({unAvailable: true})
                 }
             });
@@ -66,12 +66,16 @@ export default class App extends React.Component{
                 publishDeckList={this.state.publishDeckList}
             />);
         } else if (this.state.appType === 'jinteki') {
-
+            return (
+                <Jinteki
+                    apiKey={this.state.apiKey}
+                />
+            )
         }
         return (
             <div className="App">
                 <div className={'App-dark'} >
-                    The user has not set up the apps properly
+                    The Streamer has not set up the apps properly. Refresh to see if it has changed!
                 </div>
             </div>
         );

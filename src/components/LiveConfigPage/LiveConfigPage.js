@@ -138,7 +138,6 @@ export default class LiveConfigPage extends React.Component{
 
 
     saveJintekiState() {
-        console.log('saved correctly')
         this.twitch.configuration.set('broadcaster', '1', 
             JSON.stringify({ 
                 apiKey: this.state.apiKey,
@@ -166,7 +165,13 @@ export default class LiveConfigPage extends React.Component{
                     value={this.state.apiKey}
                     onChange={(e) => {this.changeApiKey(e)}}
                 />
-    
+                <br />
+                <label>
+                    Also make sure to enable the game options when hosting on jinteki.net
+                    <br />
+                     - Allow API access to game information
+                </label>
+                <br />
                 <Button
                     variant="contained"
                     color="primary"

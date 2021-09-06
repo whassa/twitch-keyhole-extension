@@ -4,18 +4,24 @@ import _ from 'lodash'
 import { usePopper } from 'react-popper';
 import Popover from '@material-ui/core/Popover';
 import Typography from '@material-ui/core/Typography';
+import { filterNetrunnerDBCards as filterCards } from './FilteringFunction';
+
+const STATUS_TYPE = {
+    loading: 1,
+    working: 2,
+    unAvailable: 3,
+    notConfiguredCorrectly: 4,
+};
 
 export default class NetrunnerDb extends React.Component{
     constructor(props){
     	super(props)
     	this.twitch = window.Twitch ? window.Twitch.ext : null
     	this.state = {
-            hidden: true,
-            finishedLoading: false,
+            status: STATUS_TYPE.loading,
             theme: 'light',
             isVisible: true,
-            unAvailable: false,
-            identity: [],
+            identity: {},
             cards: [],
             filteredCard: {},
             deckInfo: {},
@@ -48,67 +54,7 @@ export default class NetrunnerDb extends React.Component{
         })
     }
 
-    filterCards(cardsInfo) {
-        let filteredCard = {};
-        filteredCard.agenda = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'agenda'
-        })
-        filteredCard.asset = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'asset'
-        })
-        filteredCard.operation = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'operation'
-        })
-        filteredCard.upgrade = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'upgrade'
-        })
-
-        filteredCard.barrier = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'ice' 
-                && (_.includes(obj.keywords, 'Barrier'))
-        })
-        filteredCard.codeGate = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'ice' 
-                && (_.includes(obj.keywords, 'Code Gate'))
-        })
-        filteredCard.sentry = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'ice' 
-                && (_.includes(obj.keywords, 'Sentry'))
-        })
-        filteredCard.otherIce = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'ice' 
-                && !(
-                    _.includes(obj.keywords, 'Barrier') 
-                    || _.includes(obj.keywords, 'Code Gate')
-                    || _.includes(obj.keywords, 'Sentry')
-                )
-        })
-        filteredCard.ice = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'ice'
-        })
-        filteredCard.event = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'event'
-        })
-        filteredCard.hardware = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'hardware'
-        })
-        filteredCard.resource = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'resource'
-        })
-        filteredCard.program = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'program'  
-                && !(_.includes(obj.keywords, 'Icebreaker') || _.includes(obj.keywords, 'icebreaker'))
-        })
-        filteredCard.icebreaker = _.filter(cardsInfo, (obj) => {
-            return obj.type_code === 'program' 
-                && (_.includes(obj.keywords, 'Icebreaker'))
-        })
-        return filteredCard;
-    }
-
     fetchNetrunnerDbData(decklist, publishDeckList){
-    	console.log(decklist);
-    	console.log(publishDeckList);
         const the = this;
 
         var decklistRequest = (publishDeckList 
@@ -140,14 +86,13 @@ export default class NetrunnerDb extends React.Component{
                 })
                 let identity = cardsInfo[index];
                 await cardsInfo.splice(index, 1);
-                let filteredCard = await the.filterCards(cardsInfo);
-
+                let filteredCard = await filterCards(cardsInfo);
                 the.setState({ deckInfo: data, identity, cards: cardsInfo, filteredCard})
                 return response;
             })
             .catch( (error) => {
                 // handle error
-                the.setState({unAvailable: true})
+                the.setState({status: STATUS_TYPE.unAvailable})
             })
 
         // Get some information about factions
@@ -161,10 +106,12 @@ export default class NetrunnerDb extends React.Component{
                 the.setState({ factions })
             }
         );
-        Promise.all([req1, req2]).then(function(values) {
+        Promise.all([req1, req2]).then( (values) => {
             the.setState(()=>{
-                return {finishedLoading:true, decklistNormalRequest}
+                return {status: STATUS_TYPE.working, decklistNormalRequest}
             })
+        }).catch( ()=> {
+            the.setState({status: STATUS_TYPE.unAvailable});
         });
     }
     componentDidMount(){
@@ -182,7 +129,7 @@ export default class NetrunnerDb extends React.Component{
                             return {
                             	decklistId,
                             	publishDeckList,
-                            	finishedLoading:false
+                            	status: STATUS_TYPE.working,
                             }
                         })
                         this.fetchNetrunnerDbData(id, publishDeckList);
@@ -326,71 +273,69 @@ export default class NetrunnerDb extends React.Component{
     }
 
     render(){
-        if (this.state.unAvailable) {
-            return (
-                <div className="App">
-                    <div className={'App-dark'} >
-                        There is no current decklist selected.
-                    </div>
-                </div>
-            );
-        }
+        let stuffToRender = (
+            <div>The application seems to have a problem with please refresh your browser</div>
+        );
 
-        if(this.state.finishedLoading){
+        if (this.state.status === STATUS_TYPE.unAvailable) {
+            stuffToRender = (
+                <>
+                    There is no current decklist selected.
+                </>
+            );
+        } else if(this.state.status === STATUS_TYPE.working){
             if (this.state.cards.length > 0) {
                 let deckList =  this.state.decklistNormalRequest+this.state.deckInfo.id;
                 let src = `https://netrunnerdb.com/card_image/large/${this.state.identity.code}.jpg`;
                 let imgLink = `https://netrunnerdb.com/en/card/${this.state.identity.code}`;
-                return (
-                    <div className="App">
-                        <div className={'App-dark'} >
-                            <h1 
-                                className="deck-title"
-                            > 
-                                <a className="card-link" href={deckList} target="_blank" rel="noopener noreferrer">
-                                    {this.state.deckInfo.name}
-                                </a>
-                            </h1>
-                            <h2
-                                className="deck-identity"
-                                onMouseEnter={(e) => { this.handleClick(e, src ) }}
-                                onMouseLeave={this.handleClose}
-                            > 
-                                <a 
-                                    className="card-link"
-                                    href={imgLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ 
-                                        color: `#${this.state.factions[this.state.identity.faction_code].color}`,
-                                    }}
-                                >
-                                    {this.state.identity.title} 
-                                </a>
-                            </h2>
-                            {this.renderDeckList()}
-                        </div>
-                    </div>
+                stuffToRender = (
+                    <>
+                        <h1 
+                            className="deck-title"
+                        > 
+                            <a className="card-link" href={deckList} target="_blank" rel="noopener noreferrer">
+                                {this.state.deckInfo.name}
+                            </a>
+                        </h1>
+                        <h2
+                            className="deck-identity"
+                            onMouseEnter={(e) => { this.handleClick(e, src ) }}
+                            onMouseLeave={this.handleClose}
+                        > 
+                            <a 
+                                className="card-link"
+                                href={imgLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ 
+                                    color: `#${this.state.factions[this.state.identity.faction_code].color}`,
+                                }}
+                            >
+                                {this.state.identity.title} 
+                            </a>
+                        </h2>
+                        {this.renderDeckList()}
+                    </>
                 )
             } else {
-                return (
-                    <div className="App">
-                        <div className={'App-dark'} >
-                            <div className="lds-ring"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-                        </div>
-                    </div>
-                ) 
+                stuffToRender = (
+                    <>
+                        There is no current decklist selected.
+                    </>
+                );
             }
-        } else {
-            return (
-                <div className="App">
-                    <div className={'App-dark'} >
-                        <div className="lds-ring"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
-                    </div>
-                </div>
+        } if(this.state.status === STATUS_TYPE.loading) {
+            stuffToRender = (
+                <div className="lds-ring"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
             ) 
         }
-
+        return (
+            <div className="App">
+                <div className={'App-dark'} >
+                    {stuffToRender}
+                </div>
+            </div>
+        );
     }
  }
 
