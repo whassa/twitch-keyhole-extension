@@ -57,6 +57,7 @@ export function filterNetrunnerDBCards(cardsInfo) {
 }
 
 export function filterJintekiCards(cardsInfo) {
+    console.log(cardsInfo)
     let filteredCard = {};
     filteredCard.agenda = _.filter(cardsInfo, (obj) => {
         return obj.details.type === 'Agenda'
@@ -72,19 +73,19 @@ export function filterJintekiCards(cardsInfo) {
     })
 
     filteredCard.barrier = _.filter(cardsInfo, (obj) => {
-        return obj.details.type === 'Ice' 
+        return obj.details.type === 'ICE' 
             && (_.includes(obj.details.subtype, 'Barrier'))
     })
     filteredCard.codeGate = _.filter(cardsInfo, (obj) => {
-        return obj.details.type === 'Ice' 
+        return obj.details.type === 'ICE' 
             && (_.includes(obj.details.subtype, 'Code Gate'))
     })
     filteredCard.sentry = _.filter(cardsInfo, (obj) => {
-        return obj.details.type === 'Ice' 
+        return obj.details.type === 'ICE' 
             && (_.includes(obj.details.subtype, 'Sentry'))
     })
     filteredCard.otherIce = _.filter(cardsInfo, (obj) => {
-        return obj.details.type === 'Ice' 
+        return obj.details.type === 'ICE' 
             && !(
                 _.includes(obj.details.subtype, 'Barrier') 
                 || _.includes(obj.details.subtype, 'Code Gate')
@@ -92,7 +93,7 @@ export function filterJintekiCards(cardsInfo) {
             )
     })
     filteredCard.ice = _.filter(cardsInfo, (obj) => {
-        return obj.details.type === 'Ice'
+        return obj.details.type === 'ICE'
     })
     filteredCard.event = _.filter(cardsInfo, (obj) => {
         return obj.details.type === 'Event'
