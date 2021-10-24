@@ -5,6 +5,7 @@ import { usePopper } from 'react-popper';
 import Popover from '@material-ui/core/Popover';
 import Typography from '@material-ui/core/Typography';
 import { filterJintekiCards as filterCards } from './FilteringFunction';
+import factions from './Factions';
 
 const STATUS_TYPE = {
     loading: 1,
@@ -21,17 +22,16 @@ export default class Jinteki extends React.Component{
     		apiKey: this.props.apiKey,
             status: STATUS_TYPE.loading,
             theme: 'light',
-            factions: [],
             identity: {},
             cards: [],
             deckName: '',
             anchorEl: null,
             open: false,
             imgSrc: '',
-            factions: {},
             apiCards: {},
             interval: () => {},
     	};
+
         this.handleClick = this.handleClick.bind(this);
         this.handleClose = this.handleClose.bind(this);
         this.fetchJintekiData = this.fetchJintekiData.bind(this);
@@ -64,9 +64,6 @@ export default class Jinteki extends React.Component{
                    
                     // now we've done the setup for the component, let's set the state to true to force a rerender with the correct data.
                 }
-            })
-            this.twitch.onVisibilityChanged((isVisible,_c)=>{
-                this.visibilityChanged(isVisible)
             })
 
             this.twitch.onContext((context,delta)=>{
@@ -149,18 +146,18 @@ export default class Jinteki extends React.Component{
         this.setState({anchorEl: event.currentTarget, open: false});
     }
 
-    factionCost( {faction_cost, faction_code, numberOfCopies }){
+    factionCost( {factioncost, faction }, quantity){
         let cost = ''
-        if (faction_code !== this.state.identity.faction_code){
-            for (let i = 0; i < faction_cost*numberOfCopies; i++) {
+        if (faction !== this.state.identity.details.faction){
+            for (let i = 0; i < factioncost*quantity; i++) {
                 cost += '●'
             }
         }
         return (
             <span 
                 style={{ 
-                    color: `#${this.state.factions[faction_code].color}`,
-                    borderColor: `#${this.state.factions[faction_code].color}`,
+                    color: `#${factions[faction].color}`,
+                    borderColor: `#${factions[faction].color}`,
                 }}
             >
                 {
@@ -174,7 +171,6 @@ export default class Jinteki extends React.Component{
     cardsItem(obj) {
         let src = `https://netrunnerdb.com/card_image/large/${obj.details.code}.jpg`;
         let imgLink =  `https://netrunnerdb.com/en/card/${obj.details.code}`;
-
         return ( 
             <li className="card-item" key={obj.details.code}>
                 <span 
@@ -183,7 +179,7 @@ export default class Jinteki extends React.Component{
                     onMouseLeave={this.handleClose}
                 >
                     <a className="card-link" href={imgLink} target="_blank" rel="noopener noreferrer">
-                         {obj.qty}x {obj.title}
+                         {obj.qty}x {obj.title} {this.factionCost(obj.details, obj.qty)}
                     </a>
                 </span>
             </li>
