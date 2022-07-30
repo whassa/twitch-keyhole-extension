@@ -7,6 +7,10 @@ import Tooltip from '@material-ui/core/Tooltip';
 import HelpIcon from '@material-ui/icons/Help';
 import './Config.css'
 
+/** IMPORTANT **/
+/** AS LONG AS THERE'S NO DIFFERENCE BETWEEN THE LIVE CONFIG AND CONFIG  THE CONFIG PAGE WON'T BE USED AND
+    THE LIVE CONFIG WILL BE USED
+**/
 export default class ConfigPage extends React.Component{
     constructor(props){
         super(props)
@@ -94,7 +98,6 @@ export default class ConfigPage extends React.Component{
             .then(() => {
                 the.setState({ error: false });
             }).catch( (error) => {
-                console.log('aloa');
                 the.setState({ error: true })
             })
     }
