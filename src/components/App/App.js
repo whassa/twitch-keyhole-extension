@@ -38,6 +38,23 @@ export default class App extends React.Component{
                     } else {
                         // NetrunnerDb
                         if (obj.decklistId){
+                            if (!Number(obj.decklistId)) {
+                                const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+                                const decklistUUID = obj.decklistId.match(uuidRegex);
+                                if (decklistUUID) {
+                                    let decklistId = decklistUUID[0];
+                                    let publishDeckList =  (obj.publishDeckList);
+                                    this.setState(()=> {
+                                        return {
+                                            decklistId,
+                                            publishDeckList,
+                                            appType: 'netrunnerDb',
+                                        }
+                                    })
+                                }
+                                return;
+                            }
+
                             let decklist = Number(obj.decklistId);
                             let publishDeckList =  (obj.publishDeckList);
                             if (Number.isFinite(decklist)){

@@ -36,6 +36,7 @@ export default class Jinteki extends React.Component{
         this.handleClose = this.handleClose.bind(this);
         this.fetchJintekiData = this.fetchJintekiData.bind(this);
         // this.escapeOutput = this.escapeOutput.bind(this);
+        console.log('lmao')
     }
 
 
@@ -285,6 +286,7 @@ export default class Jinteki extends React.Component{
                 </>
             );
         } else if (this.state.status === STATUS_TYPE.notConfiguredCorrectly) {
+            console.log('aloa')
             stuffToRender = (
                 <>
                     The application is not set correctly or the streamer is not in a current game

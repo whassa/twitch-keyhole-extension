@@ -122,7 +122,24 @@ export default class NetrunnerDb extends React.Component{
                 this.twitch.rig.log("listen() fired, received PubSub message: " + message)
                 try {
                     message = JSON.parse(message);
-                    let decklistId = Number(message);
+                    if (!Number(obj.decklistId)) {
+                        const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+                        const decklistUUID = message.decklistId.match(uuidRegex);
+                        if (decklistUUID) {
+                            let decklistId = decklistUUID[0];
+                            let publishDeckList =  (message.publishDeckList);
+                            this.setState(()=>{
+                                return {
+                                    decklistId,
+                                    publishDeckList,
+                                    status: STATUS_TYPE.working,
+                                }
+                            })
+                            this.fetchNetrunnerDbData(id, publishDeckList);
+                        }
+                        return;
+                    }
+                    let decklistId = Number(message.decklistId);
                     let publishDeckList =  (message.publishDeckList);
                     if (Number.isFinite(id)) {
                         this.setState(()=>{
