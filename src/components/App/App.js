@@ -76,14 +76,14 @@ export default class App extends React.Component {
     }
   }
 
-  render() {
+  render() {   
     if (this.state.appType === "netrunnerDb") {
-      return (
-        <NetrunnerDb
-          decklistId={this.state.decklistId}
-          publishDeckList={this.state.publishDeckList}
-        />
-      );
+       return (
+      <NetrunnerDb
+        decklistId={this.state.decklistId}
+        publishDeckList={this.state.publishDeckList}
+      />
+    );
     } else if (this.state.appType === "jinteki") {
       return <Jinteki apiKey={this.state.apiKey} />;
     }

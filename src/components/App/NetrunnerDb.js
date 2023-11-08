@@ -91,7 +91,6 @@ export default class NetrunnerDb extends React.Component{
                 return response;
             })
             .catch( (error) => {
-                // handle error
                 the.setState({status: STATUS_TYPE.unAvailable})
             })
 
@@ -122,7 +121,7 @@ export default class NetrunnerDb extends React.Component{
                 this.twitch.rig.log("listen() fired, received PubSub message: " + message)
                 try {
                     message = JSON.parse(message);
-                    if (!Number(obj.decklistId)) {
+                    if (!Number(message.decklistId)) {
                         const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
                         const decklistUUID = message.decklistId.match(uuidRegex);
                         if (decklistUUID) {
@@ -135,13 +134,13 @@ export default class NetrunnerDb extends React.Component{
                                     status: STATUS_TYPE.working,
                                 }
                             })
-                            this.fetchNetrunnerDbData(id, publishDeckList);
+                            this.fetchNetrunnerDbData(decklistId, publishDeckList);
                         }
                         return;
                     }
                     let decklistId = Number(message.decklistId);
                     let publishDeckList =  (message.publishDeckList);
-                    if (Number.isFinite(id)) {
+                    if (Number.isFinite(decklistId)) {
                         this.setState(()=>{
                             return {
                             	decklistId,
@@ -149,7 +148,7 @@ export default class NetrunnerDb extends React.Component{
                             	status: STATUS_TYPE.working,
                             }
                         })
-                        this.fetchNetrunnerDbData(id, publishDeckList);
+                        this.fetchNetrunnerDbData(decklistId, publishDeckList);
                     } 
                 } catch (e) {
                     console.log(e);
