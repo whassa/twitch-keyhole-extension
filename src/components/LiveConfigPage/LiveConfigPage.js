@@ -20,7 +20,7 @@ export default class LiveConfigPage extends React.Component{
         this.twitch = window.Twitch ? window.Twitch.ext : null
         this.twitch.onError((error)=> {})
         this.state={
-            applicationUse: 'jinteki',
+            applicationUse: 'netrunnerdb',
             finishedLoading:false,
             theme:'light',
             apiKey: '',
@@ -251,7 +251,7 @@ export default class LiveConfigPage extends React.Component{
                     </span>
                     <div style={{ marginTop: '10px' }}>
                         Decklist deck list code now supports the new uuid used on netrunnerDB 
-                        and you can send save a decklist code with a complete url
+                        and you can send a decklist code with a complete url
                         <Tooltip 
                             title="Example: https://netrunnerdb.com/en/deck/view/f1bfcad4-4f5c-41b6-835f-1a08fbfe08c3 will parse f1bfcad4-4f5c-41b6-835f-1a08fbfe08c3
                             "
@@ -285,11 +285,13 @@ export default class LiveConfigPage extends React.Component{
                     <div className={this.state.theme === 'light' ? 'LiveConfigPage-light' : 'LiveConfigPage-dark'} >
                         <div>
                             Select how to fetch your decklist <Tooltip 
-                            title="You can fetch the data through netrunnerDb decklist or directly via a jinteki with an api key"
+                            title="You can fetch the data through netrunnerDb decklist or"
                             >
                                 <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
                             </Tooltip>
                         </div>
+                        {/* IF JINTEKI RETURN TO BEEING A THING */ }
+                        {/*
                         <Select
                           value={this.state.applicationUse}
                           onChange={(event) => {this.setState({applicationUse: event.target.value})}}
@@ -298,13 +300,15 @@ export default class LiveConfigPage extends React.Component{
                           <MenuItem value={'jinteki'}>Jinteki</MenuItem>
                           <MenuItem value={'netrunnerdb'}>Netrunnerdb</MenuItem>
                         </Select>
+                       
                         <Tooltip 
                             title="The change might not working during the stream"
                         >
                             <HelpIcon style={{ fontSize: 16, color: '#7E7E7E' }} />
                         </Tooltip>
-                        {this.state.applicationUse === 'jinteki' && this.renderJintekiOption()}
-                        {this.state.applicationUse === 'netrunnerdb' && this.renderNetrunnerDBOption()}
+                        */}
+                        {/*this.state.applicationUse === 'jinteki' && this.renderJintekiOption() */}
+                        {this.renderNetrunnerDBOption()}
                     </div>
                 </div>
             )
